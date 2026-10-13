@@ -4,11 +4,11 @@ import { generateProblem, getAbacusValue, generateSolutionSteps } from './utils/
 import './styles/abacus.css';
 
 const LEVELS = [
-  { id: 1, name: 'Level 1: Základy do 4' },
-  { id: 2, name: 'Level 2: Sčítanie do 9' },
-  { id: 3, name: 'Level 3: Doplnky do 5' },
-  { id: 4, name: 'Level 4: Doplnky do 10' },
-  { id: 5, name: 'Level 5: Dvojciferné' }
+  { id: 1, name: 'Level 1: Fundamentals to 4' },
+  { id: 2, name: 'Level 2: Addition to 9' },
+  { id: 3, name: 'Level 3: Complements to 5' },
+  { id: 4, name: 'Level 4: Complements to 10' },
+  { id: 5, name: 'Level 5: Two-digit numbers' }
 ];
 
 const INITIAL_RODS = [
@@ -23,7 +23,7 @@ function App() {
   const [rodsState, setRodsState] = useState(INITIAL_RODS);
   const [message, setMessage] = useState({ text: '', type: '' });
 
-  // Tutoriál stav
+  // Tutorial state
   const [tutorialMode, setTutorialMode] = useState(false);
   const [tutorialSteps, setTutorialSteps] = useState([]);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
@@ -45,19 +45,19 @@ function App() {
     setRodsState(newRods);
     setMessage({ text: '', type: '' });
 
-    // Ak beží tutoriál, kontrolujeme, či to dieťa nastavilo správne
+    // During the tutorial, check whether the child set the correct value.
     if (tutorialMode && tutorialSteps.length > 0) {
       const targetRods = tutorialSteps[currentStepIndex].rodsState;
       if (getAbacusValue(newRods) === getAbacusValue(targetRods)) {
-        // Dieťa urobilo správny krok
+        // The child completed the step correctly.
         if (currentStepIndex < tutorialSteps.length - 1) {
-          setMessage({ text: 'Správne! 👍 Posúvame sa ďalej.', type: 'success' });
+          setMessage({ text: 'Correct! 👍 Moving on.', type: 'success' });
           setTimeout(() => {
             setCurrentStepIndex(prev => prev + 1);
             setMessage({ text: '', type: '' });
           }, 1500);
         } else {
-          setMessage({ text: 'Výborne, zvládol si to! 🎉', type: 'success' });
+          setMessage({ text: "Brilliant, you've done it! 🎉", type: 'success' });
           setTimeout(() => {
             setTutorialMode(false);
             loadNewProblem();
@@ -71,12 +71,12 @@ function App() {
     if (tutorialMode) return;
     const currentValue = getAbacusValue(rodsState);
     if (currentValue === problem.answer) {
-      setMessage({ text: 'Výborne! Správna odpoveď! 🎉', type: 'success' });
+      setMessage({ text: "Brilliant! That's the right answer! 🎉", type: 'success' });
       setTimeout(() => {
         loadNewProblem();
       }, 2000);
     } else {
-      setMessage({ text: 'Skús to ešte raz, niekde je chybička. 🤔', type: 'error' });
+      setMessage({ text: "Try again – something isn't quite right. 🤔", type: 'error' });
     }
   };
 
@@ -86,20 +86,20 @@ function App() {
     setTutorialSteps(steps);
     setCurrentStepIndex(0);
     setTutorialMode(true);
-    setRodsState(INITIAL_RODS.map(r => ({ ...r }))); // Vyčisti abakus
-    setMessage({ text: 'Ukáž, čo vieš! Ak nevieš, klikni na "Ukáž mi to".', type: 'success' });
+    setRodsState(INITIAL_RODS.map(r => ({ ...r }))); // Clear the abacus.
+    setMessage({ text: 'Show what you know! If you are unsure, select "Show me".', type: 'success' });
   };
 
   const nextTutorialStep = () => {
     if (currentStepIndex < tutorialSteps.length - 1) {
       const nextIndex = currentStepIndex + 1;
-      setRodsState(tutorialSteps[currentStepIndex].rodsState); // Najprv ukážeme cieľový stav aktuálneho kroku
+      setRodsState(tutorialSteps[currentStepIndex].rodsState); // Show the target state for the current step first.
       setCurrentStepIndex(nextIndex);
       setMessage({ text: '', type: '' });
     } else {
-      // Posledný krok
+      // Final step
       setRodsState(tutorialSteps[currentStepIndex].rodsState);
-      setMessage({ text: 'Výborne! 🎉', type: 'success' });
+      setMessage({ text: 'Brilliant! 🎉', type: 'success' });
       setTimeout(() => {
         setTutorialMode(false);
         loadNewProblem();
@@ -109,7 +109,7 @@ function App() {
 
   return (
     <div className="game-layout">
-      <h1 className="title">Hravý Abakus (Soroban)</h1>
+      <h1 className="title">Playful Abacus (Soroban)</h1>
       
       <div className="level-selector">
         {LEVELS.map(l => (
@@ -129,7 +129,7 @@ function App() {
       <div className={`question-panel ${tutorialMode ? 'tutorial-active' : ''}`}>
         {tutorialMode 
           ? <div className="tutorial-text">{tutorialSteps[currentStepIndex]?.text}</div>
-          : (problem ? problem.text : 'Načítavam...')
+          : (problem ? problem.text : 'Loading...')
         }
       </div>
 
@@ -140,18 +140,18 @@ function App() {
       <div className="controls">
         {tutorialMode ? (
           <button className="btn btn-primary" onClick={nextTutorialStep}>
-            {currentStepIndex < tutorialSteps.length - 1 ? 'Ukáž mi to / Ďalší krok ➡️' : 'Koniec (Daj nový príklad)'}
+            {currentStepIndex < tutorialSteps.length - 1 ? 'Show me / Next step ➡️' : 'Finish (new problem)'}
           </button>
         ) : (
           <>
             <button className="btn btn-secondary" onClick={loadNewProblem}>
-              Nový príklad
+              New problem
             </button>
             <button className="btn btn-secondary" onClick={startTutorial}>
-              💡 Poradiť
+              💡 Hint
             </button>
             <button className="btn btn-primary" onClick={handleCheck}>
-              Skontrolovať
+              Check
             </button>
           </>
         )}

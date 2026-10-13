@@ -4,7 +4,7 @@ export const generateProblem = (level) => {
 
   switch (level) {
     case 1:
-      // Level 1 (Základy do 4): Direct addition, no 5-carry
+      // Level 1 (Fundamentals to 4): direct addition, no 5-carry.
       // E.g. 1+1, 2+1, 1+2, 1+3, 3+1, 2+2
       do {
         num1 = Math.floor(Math.random() * 4) + 1; // 1 to 4
@@ -14,7 +14,7 @@ export const generateProblem = (level) => {
       break;
 
     case 2: {
-      // Level 2 (Sčítanie do 9): No 5-carry, but uses 5
+      // Level 2 (Addition to 9): no 5-carry, but uses 5.
       // valid pairs: (5,1..4), (6,1..3), (7,1..2), (8,1)
       const type2 = Math.random();
       if (type2 > 0.5) {
@@ -33,7 +33,7 @@ export const generateProblem = (level) => {
     }
 
     case 3:
-      // Level 3 (Doplnky do 5): Result <= 9, but needs 5-complement
+      // Level 3 (Complements to 5): result <= 9, but needs a 5-complement.
       // e.g. 4+1, 3+2, 2+3, 1+4. 
       // e.g. 4+2, 4+3, 4+4
       // the first number's ones + second number's ones >= 5, but not direct
@@ -44,7 +44,7 @@ export const generateProblem = (level) => {
       break;
 
     case 4:
-      // Level 4 (Doplnky do 10):
+      // Level 4 (Complements to 10):
       // sum >= 10, e.g. 9+2, 8+5. 
       do {
         num1 = Math.floor(Math.random() * 9) + 1;
@@ -53,7 +53,7 @@ export const generateProblem = (level) => {
       break;
 
     case 5:
-      // Level 5 (Dvojciferné):
+      // Level 5 (Two-digit numbers):
       num1 = Math.floor(Math.random() * 90) + 10;
       num2 = Math.floor(Math.random() * 90) + 10;
       break;
@@ -82,7 +82,7 @@ export const getAbacusValue = (rodsState) => {
   return total;
 };
 
-// Helper na konverziu hodnoty 0-9 do stavu stĺpca
+// Convert a value from 0–9 into a rod state.
 const valueToRodState = (val) => {
   if (val >= 5) {
     return { topActive: true, bottomActiveCount: val - 5 };
@@ -91,7 +91,7 @@ const valueToRodState = (val) => {
   }
 };
 
-// Pomocná funkcia pre vygenerovanie počiatočného stavu
+// Generate the initial rod state.
 const numberToRods = (num) => {
   const str = num.toString().padStart(3, '0');
   return str.split('').map(char => valueToRodState(parseInt(char, 10)));
@@ -100,25 +100,24 @@ const numberToRods = (num) => {
 export const generateSolutionSteps = (num1, num2) => {
   const steps = [];
   
-  // Krok 1: Nastavenie 1. čísla
+  // Step 1: set the first number.
   const currentRods = numberToRods(num1);
   steps.push({
-    text: `Najprv si na abakuse nastavíme prvé číslo: ${num1}.`,
+    text: `First, set the first number on the abacus: ${num1}.`,
     rodsState: JSON.parse(JSON.stringify(currentRods))
   });
 
-  // Teraz ideme pridávať num2. Rozdelíme si ho na cifry (max stovky, desiatky, jednotky)
+  // Add num2 one digit at a time: hundreds, tens and ones.
   const num2Str = num2.toString().padStart(3, '0');
   
   for (let i = 0; i < 3; i++) {
     const digitToAdd = parseInt(num2Str[i], 10);
     if (digitToAdd === 0) continue;
 
-    const unitName = i === 0 ? "stovky" : i === 1 ? "desiatky" : "jednotky";
+    const unitName = i === 0 ? "hundreds" : i === 1 ? "tens" : "ones";
     const currentValInRod = (currentRods[i].topActive ? 5 : 0) + currentRods[i].bottomActiveCount;
     
-    // Scenár 1: Priame sčítanie (máme dosť korálkov)
-    // - Ak chceme pridať X, a neprekročíme 5, alebo ak prekročíme 5 ale horný je voľný a spodných je dosť.
+    // Scenario 1: direct addition when enough beads are available.
     const hasEnoughBottom = currentRods[i].bottomActiveCount + digitToAdd <= 4;
     const isDirectAdd = 
       (digitToAdd < 5 && hasEnoughBottom) || 
@@ -128,52 +127,48 @@ export const generateSolutionSteps = (num1, num2) => {
       const newVal = currentValInRod + digitToAdd;
       currentRods[i] = valueToRodState(newVal);
       steps.push({
-        text: `Teraz ideme pripočítať ${digitToAdd} do stĺpca pre ${unitName}. Máme voľné korálky, takže ich len priamo posunieme.`,
+        text: `Add ${digitToAdd} in the ${unitName} column. There are enough free beads, so move them directly.`,
         rodsState: JSON.parse(JSON.stringify(currentRods))
       });
       continue;
     }
 
-    // Scenár 2: Malý priateľ (Doplnok do 5)
-    // Chceme pridať digitToAdd (menej ako 5), nemáme spodné, ale máme voľnú 5-ku
+    // Scenario 2: Small Friend (a complement to 5).
     if (digitToAdd < 5 && !currentRods[i].topActive && (currentRods[i].bottomActiveCount + digitToAdd >= 5)) {
       const diff = 5 - digitToAdd;
       const newVal = currentValInRod + digitToAdd;
       currentRods[i] = valueToRodState(newVal);
       steps.push({
-        text: `Ideme pridať ${digitToAdd} do stĺpca pre ${unitName}. Nemáme dosť spodných korálkov! Použijeme Malého priateľa: pridáme vrchný korálok (5) a odoberieme ${diff}.`,
+        text: `Add ${digitToAdd} in the ${unitName} column. There are not enough lower beads, so use the Small Friend: move the upper bead (5) in and move ${diff} out.`,
         rodsState: JSON.parse(JSON.stringify(currentRods))
       });
       continue;
     }
 
-    // Scenár 3: Veľký priateľ (Doplnok do 10)
-    // Prejdeme cez 10
+    // Scenario 3: Big Friend (a complement to 10).
     if (currentValInRod + digitToAdd >= 10) {
       const diff = 10 - digitToAdd;
-      // Odstránime diff z aktuálneho stĺpca
-      // Ak nemôžeme priamo odstrániť diff (napríklad diff=6 a máme nastavené 9), je to kombinovaný krok, ale to pre naše levely 1-5 obmedzíme alebo zjednodušíme.
-      // Zjednodušene rovno nastavíme novú hodnotu modulo 10
+      // Set the simplified modulo-10 value for the current rod.
       const newVal = (currentValInRod + digitToAdd) % 10;
       currentRods[i] = valueToRodState(newVal);
       
-      // A pridáme 1 do stĺpca vľavo (i-1)
+      // Add 1 to the column on the left.
       if (i > 0) {
         const leftVal = (currentRods[i-1].topActive ? 5 : 0) + currentRods[i-1].bottomActiveCount;
         currentRods[i-1] = valueToRodState(leftVal + 1);
       }
       
       steps.push({
-        text: `Ideme pridať ${digitToAdd} do stĺpca pre ${unitName}. Už tam nemáme miesto (prejdeme cez 10)! Použijeme Veľkého priateľa: posunieme 1 korálok vľavo (+10) a tu odoberieme ${diff}.`,
+        text: `Add ${digitToAdd} in the ${unitName} column. There is no room left, so use the Big Friend: move one bead in the column to the left (+10) and move ${diff} out here.`,
         rodsState: JSON.parse(JSON.stringify(currentRods))
       });
       continue;
     }
   }
 
-  // Finálny krok - výsledok
+  // Final step: the result.
   steps.push({
-    text: `Hotovo! Výsledok na abakuse je ${num1 + num2}. Teraz si to vyskúšaj ty!`,
+    text: `Done! The result on the abacus is ${num1 + num2}. Now try it yourself!`,
     rodsState: JSON.parse(JSON.stringify(currentRods))
   });
 
